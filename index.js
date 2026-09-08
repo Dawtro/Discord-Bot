@@ -578,7 +578,7 @@ async function updateStatusMessage() {
         const statusUpdatedAt = Date.now();
         const voteInProgress = Boolean(sessionVote);
         const voteApproved = !voteInProgress && sessionVoteApproved && !sessionOverrideActive;
-        const isActive = !voteInProgress && !voteApproved && (sessionOverrideActive || Number(data.CurrentPlayers) > 0);
+        const isActive = !voteInProgress && !voteApproved && sessionOverrideActive;
         const statusText = voteInProgress
             ? '🟡 Vote in Progress'
             : voteApproved
