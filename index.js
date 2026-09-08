@@ -277,6 +277,11 @@ async function handleSessionManageCommand(interaction) {
             return;
         }
 
+        if (mode === 'require-votes' && !sessionVoteApproved) {
+            const approvedMessage = await findExistingSessionVoteApprovedMessage(interaction.channel);
+            if (approvedMessage) sessionVoteApproved = true;
+        }
+
         const voteThresholdReached = sessionVoteApproved
             || (sessionVote && sessionVote.yesVotes >= requiredSessionVotes);
 
@@ -508,6 +513,25 @@ async function findExistingSessionVoteMessage(channel) {
     return voteMessage;
 }
 
+async function findExistingSessionVoteApprovedMessage(channel) {
+    if (!channel?.isTextBased()) return null;
+
+    const messages = await channel.messages.fetch({ limit: 50 });
+    const approvedMessage = messages.find((message) => (
+        message.author.id === client.user.id
+        && JSON.stringify(message.components).includes('Session Vote Approved')
+    )) || null;
+
+    if (approvedMessage) {
+        sessionVoteMessage = approvedMessage;
+        const approvedMessageText = JSON.stringify(approvedMessage.components);
+        sessionStartVoterIds = [...approvedMessageText.matchAll(/<@!?([0-9]+)>/g)]
+            .map((match) => match[1]);
+    }
+
+    return approvedMessage;
+}
+
 async function findExistingSessionStartedMessage(channel) {
     if (!channel?.isTextBased()) return null;
 
@@ -609,10 +633,14 @@ function buildSessionVoteContainer(cancelled = false) {
 }
 
 function buildSessionVoteApprovedContainer() {
+    const voterMentions = sessionStartVoterIds.length > 0
+        ? `\nVoters: ${sessionStartVoterIds.map((userId) => `<@${userId}>`).join(' ')}`
+        : '';
+
     return new ContainerBuilder()
         .addTextDisplayComponents(
             new TextDisplayBuilder().setContent(
-                '## Session Vote Approved\nThree votes were confirmed. An authorized staff member can now use Session Start.'
+                `## Session Vote Approved\nThree votes were confirmed. An authorized staff member can now use Session Start.${voterMentions}`
             )
         );
 }
