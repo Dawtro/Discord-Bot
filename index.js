@@ -643,9 +643,16 @@ async function updateStatusMessage() {
         const sessionDetails = sessionStartTime && sessionStartedBy
             ? `\n**Started By:** <@${sessionStartedBy}>\n**Started:** <t:${Math.floor(sessionStartTime / 1000)}:t>`
             : '';
+        const voteStartedDetails = voteInProgress && sessionVote?.startedBy
+            ? `\n**Vote Started By:** <@${sessionVote.startedBy}>`
+            : '';
         const voterMentions = sessionStartPingPending
             ? sessionStartVoterIds.map((userId) => `<@${userId}>`).join(' ')
             : '';
+        const statusUserMentions = [
+            ...(sessionStartPingPending ? sessionStartVoterIds : []),
+            ...(voteInProgress && sessionVote?.startedBy ? [sessionVote.startedBy] : [])
+        ];
         const statusContainer = new ContainerBuilder()
             .addTextDisplayComponents(
                 new TextDisplayBuilder().setContent(
@@ -655,7 +662,7 @@ async function updateStatusMessage() {
             .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
             .addTextDisplayComponents(
                 new TextDisplayBuilder().setContent(
-                    `**Server Name:** ${data.Name || 'Unavailable'}\n**Server Owner:** ${ownerName}\n**Status:** ${statusText}\n**Players:** ${data.CurrentPlayers ?? 0} / ${data.MaxPlayers ?? 0}\n**Join Key:** \`${data.JoinKey || 'Unavailable'}\`${sessionDetails}`
+                    `**Server Name:** ${data.Name || 'Unavailable'}\n**Server Owner:** ${ownerName}\n**Status:** ${statusText}\n**Players:** ${data.CurrentPlayers ?? 0} / ${data.MaxPlayers ?? 0}\n**Join Key:** \`${data.JoinKey || 'Unavailable'}\`${sessionDetails}${voteStartedDetails}`
                 )
             )
             .addSeparatorComponents(new SeparatorBuilder().setDivider(true));
@@ -685,7 +692,7 @@ async function updateStatusMessage() {
         await postOrEdit(
             targetChannel,
             statusContainer,
-            sessionStartPingPending ? sessionStartVoterIds : []
+            statusUserMentions
         );
         sessionStartPingPending = false;
         console.log(`[${new Date().toLocaleTimeString()}] ER:LC Components V2 status updated.`);
