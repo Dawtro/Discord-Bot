@@ -47,6 +47,7 @@ let sessionStartTime = null;
 let sessionStartedBy = null;
 let sessionStartVoterIds = [];
 let sessionStartPingPending = false;
+let sessionStartInProgress = false;
 
 client.once('clientReady', async () => {
     console.log(`[System] Active as ${client.user.tag}. Starting ER:LC monitor. Build: fixed-utc-timestamps-v1`);
@@ -237,6 +238,11 @@ async function handleSessionManageCommand(interaction) {
         : null;
 
     if (action === 'session-start') {
+        if (sessionStartInProgress) {
+            await interaction.reply({ content: 'Session Start is already being processed.', ephemeral: true });
+            return;
+        }
+
         if (mode === 'require-votes' && !sessionVoteApproved) {
             await interaction.reply({
                 content: 'The Session Vote must reach 3 votes before the session can start.',
@@ -245,7 +251,10 @@ async function handleSessionManageCommand(interaction) {
             return;
         }
 
-        clearSessionVoteApprovalTimer();
+        sessionStartInProgress = true;
+
+        try {
+            clearSessionVoteApprovalTimer();
         sessionVote = null;
         sessionVoteApproved = false;
         sessionVoteApprovalPending = false;
@@ -289,6 +298,9 @@ async function handleSessionManageCommand(interaction) {
                 : 'The session has started after the Session Vote was approved.',
             ephemeral: true
         });
+        } finally {
+            sessionStartInProgress = false;
+        }
         return;
     }
 
