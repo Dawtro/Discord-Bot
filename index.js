@@ -48,6 +48,7 @@ let sessionStartedBy = null;
 let sessionStartVoterIds = [];
 let sessionStartPingPending = false;
 let sessionStartInProgress = false;
+const processedInteractionIds = new Set();
 
 client.once('clientReady', async () => {
     console.log(`[System] Active as ${client.user.tag}. Starting ER:LC monitor. Build: fixed-utc-timestamps-v1`);
@@ -60,6 +61,10 @@ client.once('clientReady', async () => {
 });
 
 client.on('interactionCreate', async (interaction) => {
+    if (processedInteractionIds.has(interaction.id)) return;
+    processedInteractionIds.add(interaction.id);
+    setTimeout(() => processedInteractionIds.delete(interaction.id), 60_000);
+
     try {
         if (interaction.isChatInputCommand() && interaction.commandName === 'session-manage') {
             await handleSessionManageCommand(interaction);
