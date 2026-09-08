@@ -313,8 +313,11 @@ async function handleSessionManageCommand(interaction) {
         sessionStartedBy = interaction.user.id;
         sessionStartPingPending = mode === 'require-votes' && sessionStartVoterIds.length > 0;
         const existingStartedMessage = await findExistingSessionStartedMessage(interaction.channel);
-        sessionVoteMessage = existingStartedMessage;
-        await findExistingSessionVoteMessage(interaction.channel);
+        if (existingStartedMessage) {
+            sessionVoteMessage = existingStartedMessage;
+        } else if (!sessionVoteMessage) {
+            await findExistingSessionVoteMessage(interaction.channel);
+        }
 
         const sessionStartedPayload = {
             flags: MessageFlags.IsComponentsV2,
