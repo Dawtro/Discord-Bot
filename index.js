@@ -263,6 +263,7 @@ async function handleSessionManageCommand(interaction) {
         sessionStartedBy = interaction.user.id;
         sessionStartPingPending = sessionStartVoterIds.length > 0;
         await findExistingSessionVoteMessage(interaction.channel);
+        await findExistingSessionStartedMessage(interaction.channel);
 
         const sessionStartedPayload = {
             flags: MessageFlags.IsComponentsV2,
@@ -420,6 +421,21 @@ async function findExistingSessionVoteMessage(channel) {
         && JSON.stringify(message.components).includes('session_vote_yes')
         && JSON.stringify(message.components).includes('session_vote_cancel')
     )) || sessionVoteMessage;
+}
+
+async function findExistingSessionStartedMessage(channel) {
+    if (!channel?.isTextBased()) return;
+
+    const messages = await channel.messages.fetch({ limit: 50 });
+    const startedMessages = messages.filter((message) => (
+        message.author.id === client.user.id
+        && JSON.stringify(message.components).includes('Session Started')
+    ));
+
+    const [canonicalMessage, ...duplicateMessages] = [...startedMessages.values()];
+    await Promise.all(duplicateMessages.map((message) => message.delete().catch(() => null)));
+
+    if (canonicalMessage) sessionVoteMessage = canonicalMessage;
 }
 
 async function findExistingMonitorMessage(channel) {
