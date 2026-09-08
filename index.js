@@ -268,7 +268,7 @@ async function handleSessionManageCommand(interaction) {
         sessionStartedBy = interaction.user.id;
         sessionStartPingPending = sessionStartVoterIds.length > 0;
         await findExistingSessionVoteMessage(interaction.channel);
-        await findExistingSessionStartedMessage(interaction.channel);
+        const existingStartedMessage = await findExistingSessionStartedMessage(interaction.channel);
 
         const sessionStartedPayload = {
             flags: MessageFlags.IsComponentsV2,
@@ -276,7 +276,11 @@ async function handleSessionManageCommand(interaction) {
             allowedMentions: { users: [sessionStartedBy] }
         };
 
-        if (sessionVoteMessage) {
+        if (existingStartedMessage) {
+            sessionVoteMessage = existingStartedMessage;
+            await sessionVoteMessage.edit(sessionStartedPayload);
+            console.log('[Session] Reused the existing Session Started message.');
+        } else if (sessionVoteMessage) {
             try {
                 await sessionVoteMessage.edit(sessionStartedPayload);
                 console.log('[Session] Updated the Session Vote message to Session Started.');
@@ -311,6 +315,12 @@ async function handleSessionManageCommand(interaction) {
     }
 
     if (action !== 'session-vote') return;
+
+    const existingStartedMessage = await findExistingSessionStartedMessage(interaction.channel);
+    if (existingStartedMessage) {
+        await interaction.reply({ content: 'There is already an active session.', ephemeral: true });
+        return;
+    }
 
     const liveServerStatus = await fetchServerStatus();
     const serverIsActive = sessionOverrideActive || Number(liveServerStatus.CurrentPlayers) > 0;
@@ -437,7 +447,7 @@ async function findExistingSessionVoteMessage(channel) {
 }
 
 async function findExistingSessionStartedMessage(channel) {
-    if (!channel?.isTextBased()) return;
+    if (!channel?.isTextBased()) return null;
 
     const messages = await channel.messages.fetch({ limit: 50 });
     const startedMessages = messages.filter((message) => (
@@ -449,6 +459,7 @@ async function findExistingSessionStartedMessage(channel) {
     await Promise.all(duplicateMessages.map((message) => message.delete().catch(() => null)));
 
     if (canonicalMessage) sessionVoteMessage = canonicalMessage;
+    return canonicalMessage || null;
 }
 
 async function findExistingMonitorMessage(channel) {
