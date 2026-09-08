@@ -297,6 +297,7 @@ async function handleSessionManageCommand(interaction) {
             console.log('[Session] Sent the Session Started message.');
         }
 
+        await deduplicateSessionStartedMessages(interaction.channel);
         await updateStatusMessage();
         await interaction.reply({
             content: mode === 'bypass-vote'
@@ -456,6 +457,22 @@ async function findExistingSessionStartedMessage(channel) {
 
     if (canonicalMessage) sessionVoteMessage = canonicalMessage;
     return canonicalMessage || null;
+}
+
+async function deduplicateSessionStartedMessages(channel) {
+    if (!channel?.isTextBased()) return;
+
+    const messages = await channel.messages.fetch({ limit: 50 });
+    const startedMessages = [...messages.values()]
+        .filter((message) => (
+            message.author.id === client.user.id
+            && JSON.stringify(message.components).includes('Session Started')
+        ))
+        .sort((first, second) => first.createdTimestamp - second.createdTimestamp);
+
+    const [canonicalMessage, ...duplicateMessages] = startedMessages;
+    if (canonicalMessage) sessionVoteMessage = canonicalMessage;
+    await Promise.all(duplicateMessages.map((message) => message.delete().catch(() => null)));
 }
 
 async function findExistingMonitorMessage(channel) {
