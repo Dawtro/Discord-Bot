@@ -604,22 +604,17 @@ async function postOrEdit(channel, components, userMentions = []) {
             console.error('[Status] Existing message edit failed:', {
                 message: err.message,
                 code: err.code,
-                status: err.status
+                status: err.status,
+                messageId: monitorMessage.id
             });
 
-            try {
-                monitorMessage = await channel.messages.fetch(monitorMessage.id);
-                await monitorMessage.edit(payload);
-            } catch (retryError) {
-                console.error('[Status] Existing message retry failed:', {
-                    message: retryError.message,
-                    code: retryError.code,
-                    status: retryError.status
-                });
+            monitorMessage = null;
+            await findExistingMonitorMessage(channel);
 
-                if (retryError.code === 10008) {
-                    monitorMessage = await channel.send(payload);
-                }
+            if (monitorMessage) {
+                await monitorMessage.edit(payload);
+            } else {
+                monitorMessage = await channel.send(payload);
             }
         }
     }
