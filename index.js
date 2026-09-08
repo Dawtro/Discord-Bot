@@ -267,8 +267,9 @@ async function handleSessionManageCommand(interaction) {
         sessionStartTime = Date.now();
         sessionStartedBy = interaction.user.id;
         sessionStartPingPending = sessionStartVoterIds.length > 0;
-        await findExistingSessionVoteMessage(interaction.channel);
         const existingStartedMessage = await findExistingSessionStartedMessage(interaction.channel);
+        sessionVoteMessage = existingStartedMessage;
+        await findExistingSessionVoteMessage(interaction.channel);
 
         const sessionStartedPayload = {
             flags: MessageFlags.IsComponentsV2,
@@ -281,22 +282,17 @@ async function handleSessionManageCommand(interaction) {
             await sessionVoteMessage.edit(sessionStartedPayload);
             console.log('[Session] Reused the existing Session Started message.');
         } else if (sessionVoteMessage) {
-            try {
-                await sessionVoteMessage.edit(sessionStartedPayload);
-                console.log('[Session] Updated the Session Vote message to Session Started.');
-            } catch (error) {
-                console.error('[Session] Could not edit the Session Vote message:', error.message);
-                sessionVoteMessage = null;
-                await findExistingSessionVoteMessage(interaction.channel);
-                if (sessionVoteMessage) {
-                    await sessionVoteMessage.edit(sessionStartedPayload);
-                    console.log('[Session] Updated the recovered Session Vote message to Session Started.');
-                } else {
-                    sessionVoteMessage = await interaction.channel.send(sessionStartedPayload);
-                    console.log('[Session] Sent a replacement Session Started message.');
-                }
-            }
+            await sessionVoteMessage.edit(sessionStartedPayload);
+            console.log('[Session] Updated the Session Vote message to Session Started.');
         } else {
+            if (mode === 'require-votes') {
+                await interaction.reply({
+                    content: 'The approved Session Vote message could not be found. Start a new Session Vote before starting the session.',
+                    ephemeral: true
+                });
+                return;
+            }
+
             sessionVoteMessage = await interaction.channel.send(sessionStartedPayload);
             console.log('[Session] Sent the Session Started message.');
         }
@@ -443,7 +439,7 @@ async function findExistingSessionVoteMessage(channel) {
         message.author.id === client.user.id
         && JSON.stringify(message.components).includes('session_vote_yes')
         && JSON.stringify(message.components).includes('session_vote_cancel')
-    )) || sessionVoteMessage;
+    )) || null;
 }
 
 async function findExistingSessionStartedMessage(channel) {
