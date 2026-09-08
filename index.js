@@ -83,11 +83,6 @@ client.on('interactionCreate', async (interaction) => {
         }
 
         if (interaction.customId === 'session_vote_cancel') {
-            if (!sessionVote) {
-                await interaction.reply({ content: 'There is no active Session Vote.', ephemeral: true });
-                return;
-            }
-
             if (!memberHasSessionPermissionRole(interaction.member)) {
                 await interaction.reply({
                     content: 'You need the **Session Permission Role** to cancel the vote.',
@@ -377,6 +372,7 @@ async function handleSessionManageCommand(interaction) {
         return;
     }
 
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     sessionVoteStartInProgress = true;
 
     try {
@@ -397,9 +393,8 @@ async function handleSessionManageCommand(interaction) {
             allowedMentions: { roles: sessionVoteRoleIds }
         });
         await updateStatusMessage();
-        await interaction.reply({
+        await interaction.editReply({
             content: 'The Session Vote has started.',
-            ephemeral: true
         });
     } catch (error) {
         sessionVote = null;
