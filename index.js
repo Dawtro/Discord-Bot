@@ -277,6 +277,17 @@ async function handleSessionManageCommand(interaction) {
             return;
         }
 
+        const voteThresholdReached = sessionVoteApproved
+            || (sessionVote && sessionVote.yesVotes >= requiredSessionVotes);
+
+        if (voteThresholdReached && mode !== 'require-votes') {
+            await interaction.reply({
+                content: 'Three votes have been cast. Start the session with **Require 3 Votes**.',
+                ephemeral: true
+            });
+            return;
+        }
+
         if (mode === 'require-votes' && !sessionVoteApproved) {
             await interaction.reply({
                 content: 'The Session Vote must reach 3 votes before the session can start.',
@@ -295,7 +306,7 @@ async function handleSessionManageCommand(interaction) {
         sessionOverrideActive = true;
         sessionStartTime = Date.now();
         sessionStartedBy = interaction.user.id;
-        sessionStartPingPending = sessionStartVoterIds.length > 0;
+        sessionStartPingPending = mode === 'require-votes' && sessionStartVoterIds.length > 0;
         const existingStartedMessage = await findExistingSessionStartedMessage(interaction.channel);
         sessionVoteMessage = existingStartedMessage;
         await findExistingSessionVoteMessage(interaction.channel);
