@@ -214,7 +214,10 @@ async function registerCommands() {
                 .addChoices(
                     { name: 'Bypass Vote', value: 'bypass-vote' },
                     { name: 'Require 3 Votes', value: 'require-votes' }
-                )));
+                )))
+        .addSubcommand((subcommand) => subcommand
+            .setName('session-shutdown')
+            .setDescription('Shut down the active session'));
 
     try {
         const statusChannel = await client.channels.fetch(statusChannelId);
@@ -241,6 +244,36 @@ async function handleSessionManageCommand(interaction) {
     const mode = action === 'session-start'
         ? interaction.options.getString('mode')
         : null;
+
+    if (action === 'session-shutdown') {
+        if (!sessionOverrideActive && !sessionStartTime) {
+            await interaction.reply({ content: 'There is no active session to shut down.', ephemeral: true });
+            return;
+        }
+
+        clearSessionVoteApprovalTimer();
+        sessionVote = null;
+        sessionVoteApproved = false;
+        sessionVoteApprovalPending = false;
+        sessionOverrideActive = false;
+        sessionStartTime = null;
+        sessionStartedBy = null;
+        sessionStartVoterIds = [];
+        sessionStartPingPending = false;
+
+        if (sessionVoteMessage) {
+            await sessionVoteMessage.edit({
+                flags: MessageFlags.IsComponentsV2,
+                components: [buildSessionShutdownContainer()]
+            }).catch((error) => {
+                console.error('[Session] Could not update the Session Started message:', error.message);
+            });
+        }
+
+        await updateStatusMessage();
+        await interaction.reply({ content: 'The session has been shut down.', ephemeral: true });
+        return;
+    }
 
     if (action === 'session-start') {
         if (sessionStartInProgress) {
@@ -411,6 +444,13 @@ function buildSessionStartedContainer() {
             new TextDisplayBuilder().setContent(
                 `## Session Started\nThe session was started by **<@${sessionStartedBy || '0'}>**.\nStarted <t:${Math.floor((sessionStartTime || Date.now()) / 1000)}:t>.`
             )
+        );
+}
+
+function buildSessionShutdownContainer() {
+    return new ContainerBuilder()
+        .addTextDisplayComponents(
+            new TextDisplayBuilder().setContent('## Session Shutdown\nThe session has been shut down.')
         );
 }
 
