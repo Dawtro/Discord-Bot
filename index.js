@@ -378,7 +378,7 @@ function formatTimestamp(timestamp) {
 }
 
 function formatRelativeTimestamp(timestamp) {
-    const safeTimestamp = Math.floor(timestamp / 1000) - 1;
+    const safeTimestamp = Math.floor((timestamp - 30_000) / 1000);
     return `<t:${safeTimestamp}:R>`;
 }
 
