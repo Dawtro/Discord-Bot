@@ -108,7 +108,7 @@ client.on('interactionCreate', async (interaction) => {
         }
 
         if (interaction.customId === 'session_vote_view') {
-            if (!sessionVote) {
+            if (!ensureSessionVoteState(interaction)) {
                 await interaction.reply({ content: 'There is no active Session Vote.', ephemeral: true });
                 return;
             }
@@ -126,7 +126,7 @@ client.on('interactionCreate', async (interaction) => {
 
         if (interaction.customId !== 'session_vote_yes') return;
 
-        if (!sessionVote) {
+        if (!ensureSessionVoteState(interaction)) {
             await interaction.reply({ content: 'There is no active Session Vote.', ephemeral: true });
             return;
         }
@@ -544,6 +544,23 @@ function memberHasSessionPermissionRole(member) {
         (sessionPermissionRoleId && role.id === sessionPermissionRoleId)
         || sessionPermissionRoleNames.has(role.name)
     ));
+}
+
+function ensureSessionVoteState(interaction) {
+    if (sessionVote) return true;
+
+    const messageComponents = JSON.stringify(interaction.message?.components || []);
+    const isActiveVoteMessage = messageComponents.includes('session_vote_yes')
+        && messageComponents.includes('session_vote_cancel');
+
+    if (!isActiveVoteMessage) return false;
+
+    sessionVoteMessage = interaction.message;
+    sessionVote = { voters: new Set(), yesVotes: 0, startedBy: null };
+    sessionOverrideActive = false;
+    sessionVoteApproved = false;
+    sessionVoteApprovalPending = false;
+    return true;
 }
 
 function buildSessionVoteContainer(cancelled = false) {
