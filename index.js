@@ -377,11 +377,6 @@ function formatTimestamp(timestamp) {
     return new Date(timestamp).toISOString().replace('T', ' ').replace(/\.\d{3}Z$/, ' UTC');
 }
 
-function formatRelativeTimestamp(timestamp) {
-    const safeTimestamp = Math.floor((timestamp - 30_000) / 1000);
-    return `<t:${safeTimestamp}:R>`;
-}
-
 async function removeStaleSessionVoteMessages(channel) {
     if (!channel?.isTextBased()) return;
 
@@ -545,7 +540,7 @@ async function updateStatusMessage() {
             .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
             .addTextDisplayComponents(
                 new TextDisplayBuilder().setContent(
-                    `*ER:LC status • Updates every 45 seconds • Last updated: ${formatRelativeTimestamp(statusUpdatedAt)}*`
+                    `*ER:LC status • Updates every 45 seconds • Last updated: <t:${Math.floor(statusUpdatedAt / 1000)}:f>*`
                 )
             );
 
