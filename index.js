@@ -511,6 +511,7 @@ async function updateStatusMessage() {
 
         const data = await fetchServerStatus();
         const ownerName = await fetchRobloxUsername(data.OwnerId);
+        const statusUpdatedAt = Date.now();
         const voteInProgress = Boolean(sessionVote);
         const voteApproved = !voteInProgress && sessionVoteApproved && !sessionOverrideActive;
         const isActive = !voteInProgress && !voteApproved && (sessionOverrideActive || Number(data.CurrentPlayers) > 0);
@@ -559,7 +560,7 @@ async function updateStatusMessage() {
             .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
             .addTextDisplayComponents(
                 new TextDisplayBuilder().setContent(
-                    `*ER:LC status • Updates every 45 seconds • Last updated: <t:${Math.floor(Date.now() / 1000)}:R>*`
+                    `*ER:LC status • Updates every 45 seconds • Last updated: <t:${Math.floor(statusUpdatedAt / 1000)}:R>*`
                 )
             );
 
