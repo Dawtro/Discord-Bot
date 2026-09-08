@@ -575,10 +575,11 @@ async function findExistingMonitorMessage(channel) {
 }
 
 function memberHasSessionPermissionRole(member) {
-    return member?.roles?.cache?.some((role) => (
-        (sessionPermissionRoleId && role.id === sessionPermissionRoleId)
-        || sessionPermissionRoleNames.has(role.name)
-    ));
+    if (sessionPermissionRoleId) {
+        return member?.roles?.cache?.has(sessionPermissionRoleId) ?? false;
+    }
+
+    return member?.roles?.cache?.some((role) => sessionPermissionRoleNames.has(role.name)) ?? false;
 }
 
 function ensureSessionVoteState(interaction) {
