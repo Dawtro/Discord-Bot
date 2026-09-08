@@ -559,7 +559,7 @@ async function updateStatusMessage() {
             .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
             .addTextDisplayComponents(
                 new TextDisplayBuilder().setContent(
-                    `*ER:LC status • Updates every 45 seconds • Last updated: ${formatRelativeTimestamp(Date.now())}*`
+                    `*ER:LC status • Updates every 45 seconds • Last updated: ${formatTimestamp(Date.now())}*`
                 )
             );
 
