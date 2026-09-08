@@ -368,7 +368,7 @@ function buildSessionStartedContainer() {
     return new ContainerBuilder()
         .addTextDisplayComponents(
             new TextDisplayBuilder().setContent(
-                `## Session Started\nThe session was started by **<@${sessionStartedBy || '0'}>**.\nStarted ${formatTimestamp(sessionStartTime || Date.now())}.`
+                `## Session Started\nThe session was started by **<@${sessionStartedBy || '0'}>**.\nStarted <t:${Math.floor((sessionStartTime || Date.now()) / 1000)}:t>.`
             )
         );
 }
