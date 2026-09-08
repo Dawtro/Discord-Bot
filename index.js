@@ -48,6 +48,7 @@ let sessionStartedBy = null;
 let sessionStartVoterIds = [];
 let sessionStartPingPending = false;
 let sessionStartInProgress = false;
+let sessionVoteStartInProgress = false;
 const processedInteractionIds = new Set();
 
 client.once('clientReady', async () => {
@@ -346,6 +347,11 @@ async function handleSessionManageCommand(interaction) {
 
     if (action !== 'session-vote') return;
 
+    if (sessionVoteStartInProgress) {
+        await interaction.reply({ content: 'Session Vote is already being processed.', ephemeral: true });
+        return;
+    }
+
     const existingStartedMessage = await findExistingSessionStartedMessage(interaction.channel);
     if (existingStartedMessage) {
         await interaction.reply({ content: 'There is already an active session.', ephemeral: true });
@@ -365,18 +371,26 @@ async function handleSessionManageCommand(interaction) {
         return;
     }
 
-    await removeStaleSessionVoteMessages(interaction.channel);
-    clearSessionVoteApprovalTimer();
-    sessionOverrideActive = false;
-    sessionVoteApproved = false;
-    sessionVoteApprovalPending = false;
-    sessionStartTime = null;
-    sessionStartedBy = null;
-    sessionStartVoterIds = [];
-    sessionStartPingPending = false;
-    sessionVote = { voters: new Set(), yesVotes: 0, startedBy: interaction.user.id };
+    const existingVoteMessage = await findExistingSessionVoteMessage(interaction.channel);
+    if (existingVoteMessage) {
+        await interaction.reply({ content: 'A Session Vote is already active.', ephemeral: true });
+        return;
+    }
+
+    sessionVoteStartInProgress = true;
 
     try {
+        await removeStaleSessionVoteMessages(interaction.channel);
+        clearSessionVoteApprovalTimer();
+        sessionOverrideActive = false;
+        sessionVoteApproved = false;
+        sessionVoteApprovalPending = false;
+        sessionStartTime = null;
+        sessionStartedBy = null;
+        sessionStartVoterIds = [];
+        sessionStartPingPending = false;
+        sessionVote = { voters: new Set(), yesVotes: 0, startedBy: interaction.user.id };
+
         sessionVoteMessage = await interaction.channel.send({
             flags: MessageFlags.IsComponentsV2,
             components: [buildSessionVoteContainer()],
@@ -390,6 +404,8 @@ async function handleSessionManageCommand(interaction) {
     } catch (error) {
         sessionVote = null;
         throw error;
+    } finally {
+        sessionVoteStartInProgress = false;
     }
 }
 
@@ -473,14 +489,17 @@ async function removeStaleSessionVoteMessages(channel) {
 }
 
 async function findExistingSessionVoteMessage(channel) {
-    if (!channel?.isTextBased()) return;
+    if (!channel?.isTextBased()) return null;
 
     const messages = await channel.messages.fetch({ limit: 50 });
-    sessionVoteMessage = messages.find((message) => (
+    const voteMessage = messages.find((message) => (
         message.author.id === client.user.id
         && JSON.stringify(message.components).includes('session_vote_yes')
         && JSON.stringify(message.components).includes('session_vote_cancel')
     )) || null;
+
+    if (voteMessage) sessionVoteMessage = voteMessage;
+    return voteMessage;
 }
 
 async function findExistingSessionStartedMessage(channel) {
