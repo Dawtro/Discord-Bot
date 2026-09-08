@@ -722,7 +722,7 @@ async function updateStatusMessage() {
             .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
             .addTextDisplayComponents(
                 new TextDisplayBuilder().setContent(
-                    `**Server Name:** ${data.Name || 'Unavailable'}\n**Server Owner:** ${ownerName}\n**Status:** ${statusText}\n**Players:** ${data.CurrentPlayers ?? 0} / ${data.MaxPlayers ?? 0}\n**Join Key:** \`${data.JoinKey || 'Unavailable'}\`${sessionDetails}${voteStartedDetails}`
+                    `**Server Name:** ${data.Name || 'Unavailable'}\n**Server Owner:** ${ownerName}\n**Status:** ${statusText}\n**Players:** ${data.CurrentPlayers ?? 0} / ${data.MaxPlayers ?? 0}\n**Queue:** ${data.Queue ?? 0}\n**Join Key:** \`${data.JoinKey || 'Unavailable'}\`${sessionDetails}${voteStartedDetails}`
                 )
             )
             .addSeparatorComponents(new SeparatorBuilder().setDivider(true));
