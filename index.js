@@ -312,6 +312,14 @@ async function handleSessionManageCommand(interaction) {
 
     if (action !== 'session-vote') return;
 
+    const liveServerStatus = await fetchServerStatus();
+    const serverIsActive = sessionOverrideActive || Number(liveServerStatus.CurrentPlayers) > 0;
+
+    if (serverIsActive) {
+        await interaction.reply({ content: 'There is already an active session.', ephemeral: true });
+        return;
+    }
+
     if (sessionVote) {
         await interaction.reply({ content: 'A Session Vote is already active.', ephemeral: true });
         return;
