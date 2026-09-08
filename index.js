@@ -368,7 +368,7 @@ function buildSessionStartedContainer() {
     return new ContainerBuilder()
         .addTextDisplayComponents(
             new TextDisplayBuilder().setContent(
-                `## Session Started\nThe session was started by **<@${sessionStartedBy || '0'}>**.\nStarted <t:${Math.floor((sessionStartTime || Date.now()) / 1000)}:R>.`
+                `## Session Started\nThe session was started by **<@${sessionStartedBy || '0'}>**.\nStarted <t:${Math.floor((sessionStartTime || Date.now()) / 1000)}:f>.`
             )
         );
 }
@@ -498,7 +498,7 @@ async function updateStatusMessage() {
                 ? '🟢 Active'
                 : '🔴 Closed';
         const sessionDetails = sessionStartTime && sessionStartedBy
-            ? `\n**Started By:** <@${sessionStartedBy}>\n**Started:** <t:${Math.floor(sessionStartTime / 1000)}:R>`
+            ? `\n**Started By:** <@${sessionStartedBy}>\n**Started:** <t:${Math.floor(sessionStartTime / 1000)}:f>`
             : '';
         const voterMentions = sessionStartPingPending
             ? sessionStartVoterIds.map((userId) => `<@${userId}>`).join(' ')
@@ -535,7 +535,7 @@ async function updateStatusMessage() {
             .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
             .addTextDisplayComponents(
                 new TextDisplayBuilder().setContent(
-                    `*ER:LC status • Updates every 45 seconds • Last updated: <t:${Math.floor(Date.now() / 1000)}:R>*`
+                    `*ER:LC status • Updates every 45 seconds • Last updated: <t:${Math.floor(Date.now() / 1000)}:f>*`
                 )
             );
 
