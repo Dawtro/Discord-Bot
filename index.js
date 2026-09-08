@@ -49,7 +49,7 @@ let sessionStartVoterIds = [];
 let sessionStartPingPending = false;
 
 client.once('clientReady', async () => {
-    console.log(`[System] Active as ${client.user.tag}. Starting ER:LC monitor.`);
+    console.log(`[System] Active as ${client.user.tag}. Starting ER:LC monitor. Build: fixed-utc-timestamps-v1`);
     await registerCommands();
     const statusChannel = await client.channels.fetch(statusChannelId).catch(() => null);
     await findExistingMonitorMessage(statusChannel);
@@ -539,7 +539,7 @@ async function updateStatusMessage() {
             .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
             .addTextDisplayComponents(
                 new TextDisplayBuilder().setContent(
-                    `*ER:LC status • Updates every 45 seconds • Last updated: ${formatTimestamp(Date.now())}*`
+                    `*ER:LC status • Updates every 45 seconds • Last updated (UTC): ${formatTimestamp(Date.now())}*`
                 )
             );
 
