@@ -253,6 +253,7 @@ async function handleSessionManageCommand(interaction) {
         sessionStartTime = Date.now();
         sessionStartedBy = interaction.user.id;
         sessionStartPingPending = sessionStartVoterIds.length > 0;
+        await findExistingSessionVoteMessage(interaction.channel);
 
         const sessionStartedPayload = {
             flags: MessageFlags.IsComponentsV2,
@@ -266,8 +267,15 @@ async function handleSessionManageCommand(interaction) {
                 console.log('[Session] Updated the Session Vote message to Session Started.');
             } catch (error) {
                 console.error('[Session] Could not edit the Session Vote message:', error.message);
-                sessionVoteMessage = await interaction.channel.send(sessionStartedPayload);
-                console.log('[Session] Sent a replacement Session Started message.');
+                sessionVoteMessage = null;
+                await findExistingSessionVoteMessage(interaction.channel);
+                if (sessionVoteMessage) {
+                    await sessionVoteMessage.edit(sessionStartedPayload);
+                    console.log('[Session] Updated the recovered Session Vote message to Session Started.');
+                } else {
+                    sessionVoteMessage = await interaction.channel.send(sessionStartedPayload);
+                    console.log('[Session] Sent a replacement Session Started message.');
+                }
             }
         } else {
             sessionVoteMessage = await interaction.channel.send(sessionStartedPayload);
@@ -391,6 +399,17 @@ async function removeStaleSessionVoteMessages(channel) {
     await Promise.all(staleMessages.map((message) => message.delete().catch(() => null)));
 }
 
+async function findExistingSessionVoteMessage(channel) {
+    if (!channel?.isTextBased()) return;
+
+    const messages = await channel.messages.fetch({ limit: 50 });
+    sessionVoteMessage = messages.find((message) => (
+        message.author.id === client.user.id
+        && JSON.stringify(message.components).includes('session_vote_yes')
+        && JSON.stringify(message.components).includes('session_vote_cancel')
+    )) || sessionVoteMessage;
+}
+
 async function findExistingMonitorMessage(channel) {
     if (!channel?.isTextBased()) return;
 
@@ -503,7 +522,7 @@ async function updateStatusMessage() {
                 ? '🟢 Active'
                 : '🔴 Closed';
         const sessionDetails = sessionStartTime && sessionStartedBy
-            ? `\n**Started By:** <@${sessionStartedBy}>\n**Started:** ${formatTimestamp(sessionStartTime)}`
+            ? `\n**Started By:** <@${sessionStartedBy}>\n**Started:** <t:${Math.floor(sessionStartTime / 1000)}:t>`
             : '';
         const voterMentions = sessionStartPingPending
             ? sessionStartVoterIds.map((userId) => `<@${userId}>`).join(' ')
