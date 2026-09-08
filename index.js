@@ -254,12 +254,24 @@ async function handleSessionManageCommand(interaction) {
         sessionStartedBy = interaction.user.id;
         sessionStartPingPending = sessionStartVoterIds.length > 0;
 
+        const sessionStartedPayload = {
+            flags: MessageFlags.IsComponentsV2,
+            components: [buildSessionStartedContainer()],
+            allowedMentions: { users: [sessionStartedBy] }
+        };
+
         if (sessionVoteMessage) {
-            await sessionVoteMessage.edit({
-                flags: MessageFlags.IsComponentsV2,
-                components: [buildSessionStartedContainer()],
-                allowedMentions: { users: [sessionStartedBy] }
-            }).catch(() => null);
+            try {
+                await sessionVoteMessage.edit(sessionStartedPayload);
+                console.log('[Session] Updated the Session Vote message to Session Started.');
+            } catch (error) {
+                console.error('[Session] Could not edit the Session Vote message:', error.message);
+                sessionVoteMessage = await interaction.channel.send(sessionStartedPayload);
+                console.log('[Session] Sent a replacement Session Started message.');
+            }
+        } else {
+            sessionVoteMessage = await interaction.channel.send(sessionStartedPayload);
+            console.log('[Session] Sent the Session Started message.');
         }
 
         await updateStatusMessage();
