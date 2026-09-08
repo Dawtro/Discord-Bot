@@ -47,7 +47,6 @@ let sessionStartTime = null;
 let sessionStartedBy = null;
 let sessionStartVoterIds = [];
 let sessionStartPingPending = false;
-let discordClockOffsetMs = 0;
 
 client.once('clientReady', async () => {
     console.log(`[System] Active as ${client.user.tag}. Starting ER:LC monitor. Build: fixed-utc-timestamps-v1`);
@@ -379,21 +378,8 @@ function formatTimestamp(timestamp) {
 }
 
 function formatRelativeTimestamp(timestamp) {
-    const safeTimestamp = Math.floor((timestamp + discordClockOffsetMs) / 1000);
+    const safeTimestamp = Math.floor(timestamp / 1000) - 1;
     return `<t:${safeTimestamp}:R>`;
-}
-
-async function syncDiscordClock() {
-    try {
-        const response = await axios.get('https://discord.com/api/v10/gateway', {
-            timeout: 5_000,
-            validateStatus: () => true
-        });
-        const serverDate = response.headers.date;
-        if (serverDate) discordClockOffsetMs = new Date(serverDate).getTime() - Date.now();
-    } catch (error) {
-        console.error('[Status] Could not sync Discord clock:', error.message);
-    }
 }
 
 async function removeStaleSessionVoteMessages(channel) {
@@ -503,7 +489,6 @@ async function updateStatusMessage() {
 
     try {
         console.log(`[Status] Refreshing. Vote active: ${Boolean(sessionVote)}; Override active: ${sessionOverrideActive}`);
-        await syncDiscordClock();
         const targetChannel = await client.channels.fetch(statusChannelId).catch(() => null);
         if (!targetChannel || !targetChannel.isTextBased()) {
             throw new Error('The configured status channel could not be found or is not text-based.');
