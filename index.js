@@ -12,11 +12,10 @@ const {
 } = require('discord.js');
 const axios = require('axios');
 
-const config = require('./config');
+const token = process.env.DISCORD_TOKEN;
+const erlcKey = process.env.ERLC_SERVER_KEY;
+const statusChannelId = process.env.STATUS_CHANNEL_ID;
 
-const token = process.env.DISCORD_TOKEN || config.token;
-const erlcKey = process.env.ERLC_SERVER_KEY || config.erlcKey;
-const statusChannelId = process.env.STATUS_CHANNEL_ID || config.statusChannelId;
 const updateIntervalMs = 45_000;
 const sessionPermissionRoleId = process.env.SESSION_PERMISSION_ROLE_ID;
 const sessionPermissionRoleNames = new Set([
